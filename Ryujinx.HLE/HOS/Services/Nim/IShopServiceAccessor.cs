@@ -1,7 +1,10 @@
-﻿using Ryujinx.Common.Logging;
+﻿using Ryujinx.Common;
+using Ryujinx.Common.Logging;
 using Ryujinx.HLE.HOS.Ipc;
 using Ryujinx.HLE.HOS.Kernel.Threading;
+using Ryujinx.HLE.HOS.Services.Nim.AsyncContext;
 using Ryujinx.HLE.HOS.Services.Nim.ShopServiceAccessServerInterface.ShopServiceAccessServer.ShopServiceAccessor;
+using Ryujinx.HLE.HOS.Services.Nim.Types;
 using Ryujinx.Horizon.Common;
 using System;
 
@@ -9,32 +12,26 @@ namespace Ryujinx.HLE.HOS.Services.Nim.ShopServiceAccessServerInterface.ShopServ
 {
     class IShopServiceAccessor : IpcService
     {
-        private readonly KEvent _event;
-
-        private int _eventHandle;
-
-        public IShopServiceAccessor(Horizon system)
-        {
-            _event = new KEvent(system.KernelContext);
-        }
+        public IShopServiceAccessor() { }
 
         [CommandHipc(0)]
-        // CreateAsyncInterface(u64) -> (handle<copy>, object<nn::ec::IShopServiceAsync>)
+        // CreateAsyncInterface(nn::nim::ShopServiceAccessTypes::FixedParams) -> (handle<copy>, object<nn::ec::IShopServiceAsync>)
         public ResultCode CreateAsyncInterface(ServiceCtx context)
         {
-            MakeObject(context, new IShopServiceAsync());
+            FixedParams    fixedParams       = context.RequestData.ReadStruct<FixedParams>();
+            KEvent         asyncDoneEvent    = new KEvent(context.Device.System.KernelContext);
+            AsyncExecution asyncExecution    = new AsyncExecution(asyncDoneEvent, fixedParams);
 
-            if (_eventHandle == 0)
+            if (context.Process.HandleTable.GenerateHandle(asyncDoneEvent.ReadableEvent, out int asyncDoneEventHandle) != Result.Success)
             {
-                if (context.Process.HandleTable.GenerateHandle(_event.ReadableEvent, out _eventHandle) != Result.Success)
-                {
-                    throw new InvalidOperationException("Out of handles!");
-                }
+                throw new InvalidOperationException("Out of handles!");
             }
 
-            context.Response.HandleDesc = IpcHandleDesc.MakeCopy(_eventHandle);
+            MakeObject(context, new IShopServiceAsync(asyncExecution));
 
-            Logger.Stub?.PrintStub(LogClass.ServiceNim);
+            context.Response.HandleDesc = new IpcHandleDesc(new int[] { asyncDoneEventHandle }, context.Response.HandleDesc.ToMove);
+
+            Logger.Stub?.PrintStub(LogClass.ServiceNim, new { fixedParams.UserId, asyncExecution.Timeout, fixedParams.Method});
 
             return ResultCode.Success;
         }

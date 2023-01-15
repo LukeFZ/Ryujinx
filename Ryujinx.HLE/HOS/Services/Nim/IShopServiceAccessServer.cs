@@ -11,7 +11,7 @@ namespace Ryujinx.HLE.HOS.Services.Nim.ShopServiceAccessServerInterface
         // CreateAccessorInterface(u8) -> object<nn::ec::IShopServiceAccessor>
         public ResultCode CreateAccessorInterface(ServiceCtx context)
         {
-            MakeObject(context, new IShopServiceAccessor(context.Device.System));
+            MakeObject(context, new IShopServiceAccessor());
 
             Logger.Stub?.PrintStub(LogClass.ServiceNim);
 
