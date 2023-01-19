@@ -53,7 +53,7 @@ namespace Ryujinx.HLE.HOS.Services.Nim.AsyncContext
 
                 Status = ResultCode.Success;
 
-                OutputBuffer = Array.Empty<byte>();
+                OutputBuffer = "{}"u8.ToArray();
 
                 _doneEvent.ReadableEvent.Signal();
             }, _token);
