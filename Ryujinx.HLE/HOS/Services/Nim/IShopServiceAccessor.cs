@@ -31,8 +31,6 @@ namespace Ryujinx.HLE.HOS.Services.Nim.ShopServiceAccessServerInterface.ShopServ
 
             context.Response.HandleDesc = new IpcHandleDesc(new int[] { asyncDoneEventHandle }, context.Response.HandleDesc.ToMove);
 
-            Logger.Stub?.PrintStub(LogClass.ServiceNim, new { fixedParams.UserId, asyncExecution.Timeout, fixedParams.Method});
-
             return ResultCode.Success;
         }
     }

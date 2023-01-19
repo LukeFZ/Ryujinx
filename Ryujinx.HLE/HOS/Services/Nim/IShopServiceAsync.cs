@@ -18,12 +18,7 @@ namespace Ryujinx.HLE.HOS.Services.Nim.ShopServiceAccessServerInterface.ShopServ
         // Cancel()
         public ResultCode Cancel(ServiceCtx context)
         {
-            if (!_asyncExecution.IsInitialized)
-            {
-                return ResultCode.AsyncExecutionNotInitialized;
-            }
-
-            if (_asyncExecution.IsRunning)
+            if (_asyncExecution.Status == ResultCode.NotStarted && _asyncExecution.OutputBuffer.Length == 0)
             {
                 _asyncExecution.Cancel();
             }
@@ -36,15 +31,13 @@ namespace Ryujinx.HLE.HOS.Services.Nim.ShopServiceAccessServerInterface.ShopServ
         // GetSize() -> u64
         public ResultCode GetSize(ServiceCtx context)
         {
-            if (!_asyncExecution.IsInitialized)
+            if (_asyncExecution.Status != ResultCode.Success)
             {
-                return ResultCode.AsyncExecutionNotInitialized;
+                return _asyncExecution.Status;
             }
 
             ulong size = (ulong)_asyncExecution.OutputBuffer.Length;
             context.ResponseData.Write(size);
-
-            Logger.Stub?.PrintStub(LogClass.ServiceNim, new { size });
 
             return ResultCode.Success;
         }
@@ -54,9 +47,9 @@ namespace Ryujinx.HLE.HOS.Services.Nim.ShopServiceAccessServerInterface.ShopServ
         // Read() -> (u64, buffer<bytes, 6>)
         public ResultCode Read(ServiceCtx context)
         {
-            if (!_asyncExecution.IsInitialized)
+            if (_asyncExecution.Status != ResultCode.Success)
             {
-                return ResultCode.AsyncExecutionNotInitialized;
+                return _asyncExecution.Status;
             }
 
             ulong bufferPosition = context.Request.ReceiveBuff[0].Position;
@@ -68,8 +61,6 @@ namespace Ryujinx.HLE.HOS.Services.Nim.ShopServiceAccessServerInterface.ShopServ
             context.Memory.Write(bufferPosition, data);
             context.ResponseData.Write(size);
 
-            Logger.Stub?.PrintStub(LogClass.ServiceNim);
-
             return ResultCode.Success;
         }
 
@@ -78,16 +69,12 @@ namespace Ryujinx.HLE.HOS.Services.Nim.ShopServiceAccessServerInterface.ShopServ
         // GetErrorCode() -> ErrorCode
         public ResultCode GetErrorCode(ServiceCtx context)
         {
-            if (!_asyncExecution.IsInitialized)
+            if (_asyncExecution.Status != ResultCode.Success)
             {
-                return ResultCode.AsyncExecutionNotInitialized;
+                return _asyncExecution.Status;
             }
 
-            Result errorCode = _asyncExecution.ErrorCode;
-
-            context.ResponseData.Write(errorCode.ErrorCode);
-
-            Logger.Stub?.PrintStub(LogClass.ServiceNim, new {errorCode});
+            context.ResponseData.Write(0);
 
             return ResultCode.Success;
         }
@@ -99,8 +86,6 @@ namespace Ryujinx.HLE.HOS.Services.Nim.ShopServiceAccessServerInterface.ShopServ
         {
             _asyncExecution.Request();
 
-            Logger.Stub?.PrintStub(LogClass.ServiceNim);
-
             return ResultCode.Success;
         }
 
@@ -108,11 +93,6 @@ namespace Ryujinx.HLE.HOS.Services.Nim.ShopServiceAccessServerInterface.ShopServ
         // Prepare(buffer<string, 5>, buffer<string, 5>)
         public ResultCode Prepare(ServiceCtx context)
         {
-            if (_asyncExecution.IsInitialized)
-            {
-                return ResultCode.AlreadyInitialized;
-            }
-
             ulong pathPosition     = context.Request.SendBuff[0].Position;
             ulong pathSize         = context.Request.SendBuff[0].Size;
             ulong postDataPosition = context.Request.SendBuff[1].Position;
@@ -133,8 +113,6 @@ namespace Ryujinx.HLE.HOS.Services.Nim.ShopServiceAccessServerInterface.ShopServ
             }
 
             _asyncExecution.Prepare(path, postData);
-
-            Logger.Stub?.PrintStub(LogClass.ServiceNim, new {path, postData});
 
             return ResultCode.Success;
         }

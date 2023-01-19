@@ -7,8 +7,9 @@ namespace Ryujinx.HLE.HOS.Services.Nim
 
         Success = 0,
 
-        AlreadyInitialized           = (10 << ErrorCodeShift) | ModuleId,
-        AsyncExecutionNotInitialized = (40 << ErrorCodeShift) | ModuleId,
-        NullArgument                 = (90 << ErrorCodeShift) | ModuleId
+        AlreadyInitialized           = (10 << ErrorCodeShift)   | ModuleId,
+        NotStarted                   = (60 << ErrorCodeShift)   | ModuleId,
+        NullArgument                 = (90 << ErrorCodeShift)   | ModuleId,
+        Cancelled                    = (1450 << ErrorCodeShift) | ModuleId
     }
 }
