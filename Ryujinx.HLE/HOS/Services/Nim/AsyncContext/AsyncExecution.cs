@@ -49,7 +49,7 @@ namespace Ryujinx.HLE.HOS.Services.Nim.AsyncContext
                 // NOTE: This is stubbed here since we cannot implement store network calls.
                 // Instead, we just immediately signal completion with an empty output buffer.
 
-                Logger.Stub?.PrintStub(LogClass.ServiceNim, new {Path = _path, PostData = _postData, Method = _method, UserId = _userId});
+                Logger.Stub?.PrintStub(LogClass.ServiceNim, new {_path, _postData, _method, _userId});
 
                 Status = ResultCode.Success;
 
